@@ -65,3 +65,15 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
 
+
+https://md.fonnte.com/new/device.php
+
+php artisan serve --host=0.0.0.0 --port=8000
+
+cek ip config dan ambil IP nya
+
+php artisan config:clear
+php artisan cache:clear
+php artisan queue:work
+php artisan queue:listen
+

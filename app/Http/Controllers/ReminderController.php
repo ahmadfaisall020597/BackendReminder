@@ -22,6 +22,13 @@ class ReminderController extends Controller
     // noted jika tidak terkirim jalankan php artisan queue:work karena bisa jadi jobsnya antriannya banyak.
     public function store(Request $request)
     {
+        if ($request->user()->role !== 'admin') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Akses ditolak. Hanya administrator yang dapat membuat reminder.'
+            ], 403);
+        }
+
         $request->validate([
             'phone' => 'required',
             'message' => 'required',
@@ -59,6 +66,76 @@ class ReminderController extends Controller
                 'status' => 'error',
                 'message' => 'Gagal menyimpan reminder',
                 'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function filterReminderIsPending(Request $request)
+    {
+        try {
+            $perPage = $request->get('per_page', 10);
+
+            $reminders = Reminder::where('sent', false)
+                ->orderBy('reminder_at', 'asc')
+                ->paginate($perPage);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Data reminder pending berhasil diambil.',
+                'data' => $reminders->items(),
+
+                'pagination' => [
+                    'current_page' => $reminders->currentPage(),
+                    'last_page' => $reminders->lastPage(),
+                    'per_page' => $reminders->perPage(),
+                    'total' => $reminders->total(),
+                    'from' => $reminders->firstItem(),
+                    'to' => $reminders->lastItem(),
+                    'next_page_url' => $reminders->nextPageUrl(),
+                    'prev_page_url' => $reminders->previousPageUrl(),
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal mengambil reminder pending.',
+            ], 500);
+        }
+    }
+
+    public function filterReminderIsReceived(Request $request)
+    {
+        try {
+            $perPage = $request->get('per_page', 10);
+
+            $reminders = Reminder::where('sent', true)
+                ->orderBy('reminder_at', 'desc')
+                ->paginate($perPage);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Data reminder berhasil dikirim.',
+                'data' => $reminders->items(),
+
+                'pagination' => [
+                    'current_page' => $reminders->currentPage(),
+                    'last_page' => $reminders->lastPage(),
+                    'per_page' => $reminders->perPage(),
+                    'total' => $reminders->total(),
+                    'from' => $reminders->firstItem(),
+                    'to' => $reminders->lastItem(),
+                    'next_page_url' => $reminders->nextPageUrl(),
+                    'prev_page_url' => $reminders->previousPageUrl(),
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal mengambil reminder yang sudah dikirim.',
             ], 500);
         }
     }
